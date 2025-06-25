@@ -10,8 +10,8 @@ import GigCard from "./GigCard";
 
 const FeaturedGigs = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [priceRange, setPriceRange] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [priceRange, setPriceRange] = useState("all");
 
   const { data: gigs = [], isLoading } = useQuery({
     queryKey: ['gigs'],
@@ -39,8 +39,8 @@ const FeaturedGigs = () => {
   const filteredGigs = gigs.filter((gig) => {
     const matchesSearch = gig.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          gig.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !selectedCategory || gig.category === selectedCategory;
-    const matchesPriceRange = !priceRange || 
+    const matchesCategory = selectedCategory === "all" || gig.category === selectedCategory;
+    const matchesPriceRange = priceRange === "all" || 
       (priceRange === "0-50" && gig.price_max <= 50) ||
       (priceRange === "50-200" && gig.price_min >= 50 && gig.price_max <= 200) ||
       (priceRange === "200+" && gig.price_min >= 200);
@@ -93,7 +93,7 @@ const FeaturedGigs = () => {
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               {categories.map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
@@ -107,7 +107,7 @@ const FeaturedGigs = () => {
               <SelectValue placeholder="Price Range" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Prices</SelectItem>
+              <SelectItem value="all">All Prices</SelectItem>
               <SelectItem value="0-50">$0 - $50</SelectItem>
               <SelectItem value="50-200">$50 - $200</SelectItem>
               <SelectItem value="200+">$200+</SelectItem>
