@@ -9,7 +9,207 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          applicant_id: string
+          created_at: string | null
+          gig_id: string
+          id: string
+          proposal: string
+          proposed_price: number
+          status: string
+        }
+        Insert: {
+          applicant_id: string
+          created_at?: string | null
+          gig_id: string
+          id?: string
+          proposal: string
+          proposed_price: number
+          status?: string
+        }
+        Update: {
+          applicant_id?: string
+          created_at?: string | null
+          gig_id?: string
+          id?: string
+          proposal?: string
+          proposed_price?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_gig_id_fkey"
+            columns: ["gig_id"]
+            isOneToOne: false
+            referencedRelation: "gigs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gigs: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string
+          duration: string
+          id: string
+          location: string
+          price_max: number
+          price_min: number
+          skills_required: string[]
+          status: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description: string
+          duration: string
+          id?: string
+          location: string
+          price_max: number
+          price_min: number
+          skills_required: string[]
+          status?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string
+          duration?: string
+          id?: string
+          location?: string
+          price_max?: number
+          price_min?: number
+          skills_required?: string[]
+          status?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gigs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          graduation_year: number | null
+          id: string
+          major: string | null
+          rating: number | null
+          skills: string[] | null
+          total_reviews: number | null
+          university: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          graduation_year?: number | null
+          id: string
+          major?: string | null
+          rating?: number | null
+          skills?: string[] | null
+          total_reviews?: number | null
+          university?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          graduation_year?: number | null
+          id?: string
+          major?: string | null
+          rating?: number | null
+          skills?: string[] | null
+          total_reviews?: number | null
+          university?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          gig_id: string
+          id: string
+          rating: number
+          reviewee_id: string
+          reviewer_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          gig_id: string
+          id?: string
+          rating: number
+          reviewee_id: string
+          reviewer_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          gig_id?: string
+          id?: string
+          rating?: number
+          reviewee_id?: string
+          reviewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_gig_id_fkey"
+            columns: ["gig_id"]
+            isOneToOne: false
+            referencedRelation: "gigs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_reviewee_id_fkey"
+            columns: ["reviewee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

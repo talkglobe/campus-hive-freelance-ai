@@ -1,92 +1,189 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Star, MapPin, Clock, DollarSign } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Star, MapPin, Clock, User } from "lucide-react";
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 interface GigCardProps {
-  title: string;
-  description: string;
-  price: string;
-  duration: string;
-  location: string;
-  rating: number;
-  reviews: number;
-  skills: string[];
-  freelancer: {
-    name: string;
-    avatar: string;
-    university: string;
+  gig: {
+    id: string;
+    title: string;
+    description: string;
+    price_min: number;
+    price_max: number;
+    duration: string;
+    location: string;
+    category: string;
+    skills_required: string[];
+    freelancer: {
+      name: string;
+      university: string;
+      rating: number;
+    };
   };
 }
 
-const GigCard = ({ title, description, price, duration, location, rating, reviews, skills, freelancer }: GigCardProps) => {
+const GigCard = ({ gig }: GigCardProps) => {
+  const { user } = useAuth();
+  const [isApplying, setIsApplying] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
+
+  const handleApply = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!user) {
+      toast.error('Please sign in to apply for gigs');
+      return;
+    }
+    
+    setIsApplying(true);
+    const formData = new FormData(e.currentTarget);
+    
+    const applicationData = {
+      gig_id: gig.id,
+      applicant_id: user.id,
+      proposal: formData.get('proposal') as string,
+      proposed_price: parseInt(formData.get('proposedPrice') as string)
+    };
+
+    const { error } = await supabase
+      .from('applications')
+      .insert([applicationData]);
+
+    if (error) {
+      if (error.code === '23505') {
+        toast.error('You have already applied for this gig');
+      } else {
+        toast.error('Failed to submit application: ' + error.message);
+      }
+    } else {
+      toast.success('Application submitted successfully!');
+      setShowDialog(false);
+    }
+
+    setIsApplying(false);
+  };
+
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-0 shadow-lg bg-white">
-      <CardHeader className="pb-3">
+    <Card className="h-full hover:shadow-lg transition-shadow">
+      <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2">{title}</h3>
-            <p className="text-gray-600 text-sm line-clamp-2">{description}</p>
+            <CardTitle className="text-lg mb-2">{gig.title}</CardTitle>
+            <CardDescription className="text-sm line-clamp-3">
+              {gig.description}
+            </CardDescription>
           </div>
-        </div>
-        
-        <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-          <div className="flex items-center gap-1">
-            <DollarSign className="w-4 h-4" />
-            <span className="font-semibold text-green-600">{price}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            <span>{duration}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <MapPin className="w-4 h-4" />
-            <span>{location}</span>
-          </div>
+          <Badge variant="secondary">{gig.category}</Badge>
         </div>
       </CardHeader>
-      
-      <CardContent className="py-3">
-        <div className="flex flex-wrap gap-2 mb-4">
-          {skills.slice(0, 3).map((skill, index) => (
-            <Badge key={index} variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <span className="text-2xl font-bold text-green-600">
+            ${gig.price_min} - ${gig.price_max}
+          </span>
+        </div>
+
+        <div className="space-y-2 text-sm text-gray-600">
+          <div className="flex items-center">
+            <Clock className="h-4 w-4 mr-2" />
+            <span>{gig.duration}</span>
+          </div>
+          <div className="flex items-center">
+            <MapPin className="h-4 w-4 mr-2" />
+            <span>{gig.location}</span>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-1">
+          {gig.skills_required.slice(0, 3).map((skill) => (
+            <Badge key={skill} variant="outline" className="text-xs">
               {skill}
             </Badge>
           ))}
-          {skills.length > 3 && (
-            <Badge variant="secondary" className="text-xs bg-gray-50 text-gray-600">
-              +{skills.length - 3} more
+          {gig.skills_required.length > 3 && (
+            <Badge variant="outline" className="text-xs">
+              +{gig.skills_required.length - 3} more
             </Badge>
           )}
         </div>
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img
-              src={freelancer.avatar}
-              alt={freelancer.name}
-              className="w-8 h-8 rounded-full object-cover"
-            />
+
+        <div className="flex items-center justify-between pt-4 border-t">
+          <div className="flex items-center space-x-2">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="text-xs">
+                {gig.freelancer.name.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
             <div>
-              <p className="font-medium text-sm text-gray-900">{freelancer.name}</p>
-              <p className="text-xs text-gray-500">{freelancer.university}</p>
+              <p className="text-sm font-medium">{gig.freelancer.name}</p>
+              <p className="text-xs text-gray-600">{gig.freelancer.university}</p>
             </div>
           </div>
-          
-          <div className="flex items-center gap-1">
-            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-            <span className="font-semibold text-sm">{rating}</span>
-            <span className="text-xs text-gray-500">({reviews})</span>
-          </div>
+          {gig.freelancer.rating > 0 && (
+            <div className="flex items-center">
+              <Star className="h-4 w-4 text-yellow-500 fill-current" />
+              <span className="text-sm ml-1">{gig.freelancer.rating.toFixed(1)}</span>
+            </div>
+          )}
         </div>
+
+        <Dialog open={showDialog} onOpenChange={setShowDialog}>
+          <DialogTrigger asChild>
+            <Button className="w-full">Apply Now</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Apply for "{gig.title}"</DialogTitle>
+              <DialogDescription>
+                Submit your proposal and proposed price for this gig.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleApply} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Your Proposal</label>
+                <Textarea
+                  name="proposal"
+                  placeholder="Explain why you're the right person for this gig..."
+                  className="min-h-24"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Your Price ($)</label>
+                <Input
+                  name="proposedPrice"
+                  type="number"
+                  min={gig.price_min}
+                  max={gig.price_max}
+                  placeholder={`${gig.price_min} - ${gig.price_max}`}
+                  required
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowDialog(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isApplying} className="flex-1">
+                  {isApplying ? 'Submitting...' : 'Submit Application'}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </CardContent>
-      
-      <CardFooter className="pt-3">
-        <Button className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white">
-          View Details
-        </Button>
-      </CardFooter>
     </Card>
   );
 };
